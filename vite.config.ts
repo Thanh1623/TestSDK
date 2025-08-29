@@ -11,4 +11,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      // tất cả request tới /api sẽ forward sang BE
+      "/api": {
+        target: "https://dev-2025.motionbank.net", // backend
+        changeOrigin: true,  // sửa host header để giống domain BE
+        secure: false,       // nếu BE là https self-signed
+      },
+    },
+  },
+
 });

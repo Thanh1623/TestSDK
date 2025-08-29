@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWeb3 } from "./dist";
+import { NFTInfo } from "./web3/contract.info";
+import Cookies from "js-cookie";
+import { accessToken, sessionToken } from "./const";
+import axios from "axios";
 
 function App() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [otp, setOTP] = useState("");
+  const [log, setLog] = useState<any>();
   // const [OTPCount, setOTPCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,9 +17,17 @@ function App() {
     loginMagic,
     verifyOTPMagic,
     // setIsSendingOTP,
+    isVerifyingOTP,
     checkLoggedInMagic,
     disconnectWallet,
+    ethersSigner,
+    nftContract,
+    magic,
+    listNFT,
+    history,
   } = useWeb3();
+
+  console.log({ magic });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +87,40 @@ function App() {
     [disconnectWallet]
   );
 
+  async function mintNFT() {
+    if (ethersSigner && nftContract) {
+      // Gọi hàm mint (chỉ cần address)
+
+      try {
+        const address = await ethersSigner.getAddress();
+        console.log("get Address:", address);
+
+        // ⚠️ ở đây phải đúng tên function trong ABI, có thể là "mint", "safeMint", "mintTo", v.v.
+        const tx = await nftContract.mint(address);
+        console.log("Minting... tx hash:", tx.hash);
+
+        const receipt = await tx.wait();
+        setLog(receipt);
+        console.log("Mint thành công:", receipt);
+      } catch (e) {
+        console.log({ e });
+      }
+    }
+  }
+  console.log({ log });
+  const onList = useCallback(async () => {
+    console.log({ log });
+    // const data =
+    if (log) {
+      const data = await listNFT({
+        price: "0.1",
+        amount: 1,
+        tokenId: log.logs[0].topics[3],
+      });
+      console.log({ data });
+    }
+  }, [listNFT, log]);
+
   useEffect(() => {
     if (step !== "otp") return;
 
@@ -81,6 +128,24 @@ function App() {
       verifyOTPMagic?.(otp, () => {});
     }
   }, [otp, step]);
+
+  const setCookie = () => {
+    Cookies.set("access_token", accessToken);
+    Cookies.set("session", sessionToken);
+  };
+
+  const onCheckAuthorize = async () => {
+    try {
+      const res = await axios.put(
+        "/api/authorize",
+        {},
+        { withCredentials: true }
+      );
+      console.log(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <>
@@ -101,6 +166,37 @@ function App() {
         >
           Check
         </button>
+
+        <button
+          onClick={() => {
+            setStep("otp");
+          }}
+        >
+          next step
+        </button>
+
+        <button onClick={mintNFT}>Mint</button>
+        <button onClick={() => console.log(magic?.wallet?.showAddress())}>
+          Address
+        </button>
+        <button onClick={() => console.log(magic?.user?.getIdToken())}>
+          xx
+        </button>
+        <button onClick={() => console.log(magic?.wallet?.showBalances())}>
+          pp
+        </button>
+        <button onClick={onList}>List</button>
+        <button
+          onClick={async () => {
+            const xxx = await history();
+            console.log({ xxx });
+          }}
+        >
+          history
+        </button>
+        <button onClick={setCookie}>set Cookie</button>
+
+        <button onClick={onCheckAuthorize}>call api author</button>
       </div>
       {step === "email" ? (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -138,6 +234,7 @@ function App() {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">
                 INPUT OTP
+                {isVerifyingOTP && <div>Loading</div>}
               </label>
               <input
                 value={otp}

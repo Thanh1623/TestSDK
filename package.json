@@ -12,6 +12,7 @@
   "dependencies": {
     "@magic-ext/oauth": "^23.4.2",
     "@tailwindcss/vite": "^4.1.12",
+    "axios": "^1.11.0",
     "ethers": "^6.15.0",
     "js-cookie": "^3.0.5",
     "magic-sdk": "^29.4.2",
