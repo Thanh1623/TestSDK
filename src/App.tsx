@@ -277,7 +277,17 @@ function App() {
       });
 
       // 6) Gửi tx → kỳ vọng provider ném lỗi "insufficient funds ..."
+      
+      
+      // quá phí gas
       const tx = await marketContract.deleteListing(listingId, overrides);
+      
+      
+      // không quá phí
+      // const tx = await marketContract.deleteListing(listingId);
+
+
+
       // Nếu tới đây mà KHÔNG lỗi (tức bạn vẫn đủ tiền 😅), có thể cancel/không wait.
       console.log("⚠️ Tx unexpectedly sent:", tx.hash);
     } catch (error: any) {
